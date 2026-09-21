@@ -1,16 +1,41 @@
 // ============================================================
 // Voice Service — Web Speech API (STT + TTS)
-// Gracefully degrades if not supported
+// Dynamically synced with active i18n language setting
 // ============================================================
 
+import i18n from 'i18next'
+
 export const isSpeechSupported = {
-  recognition: typeof window !== 'undefined' && 
+  recognition:
+    typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window),
   synthesis: typeof window !== 'undefined' && 'speechSynthesis' in window,
 }
 
+// ── Language Locale Mapper ──────────────────────────────────
+export function getVoiceLocale(appLang?: string): string {
+  const currentLang = appLang || i18n.language || 'en'
+  const localeMap: Record<string, string> = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    as: 'as-IN',
+    mni: 'mni-IN',
+  }
+  return localeMap[currentLang] || 'en-IN'
+}
+
+export function setSpeechLocale(langCode: string): string {
+  i18n.changeLanguage(langCode)
+  return getVoiceLocale(langCode)
+}
+
 // ── Text-to-Speech ─────────────────────────────────────────
-export function speak(text: string, lang = 'en-IN', rate = 0.85, pitch = 1): Promise<void> {
+export function speak(
+  text: string,
+  lang?: string,
+  rate = 0.85,
+  pitch = 1
+): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!isSpeechSupported.synthesis) {
       resolve()
@@ -20,23 +45,27 @@ export function speak(text: string, lang = 'en-IN', rate = 0.85, pitch = 1): Pro
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
 
+    const targetLocale = lang || getVoiceLocale()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = lang
+    utterance.lang = targetLocale
     utterance.rate = rate
     utterance.pitch = pitch
     utterance.volume = 1
 
-    // Try to use a natural voice
+    // Select natural voice matching locale or language prefix fallback
     const voices = window.speechSynthesis.getVoices()
-    const preferredVoice = voices.find(
-      (v) => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural'))
-    ) || voices.find((v) => v.lang.startsWith('en'))
-    
+    const langPrefix = targetLocale.split('-')[0]
+    const preferredVoice =
+      voices.find((v) => v.lang === targetLocale) ||
+      voices.find((v) => v.lang.startsWith(langPrefix)) ||
+      voices.find((v) => v.lang.startsWith('hi')) ||
+      voices.find((v) => v.lang.startsWith('en'))
+
     if (preferredVoice) utterance.voice = preferredVoice
 
     utterance.onend = () => resolve()
     utterance.onerror = (e) => {
-      // Don't reject on 'interrupted' error - it's expected
+      // Don't reject on 'interrupted' error - it's expected behavior on new speak calls
       if (e.error === 'interrupted') resolve()
       else reject(e)
     }
@@ -74,7 +103,7 @@ export class SpeechRecognitionService {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
 
     this.recognition = new SpeechRecognition()
-    this.recognition.lang = options.lang || 'en-IN'
+    this.recognition.lang = options.lang || getVoiceLocale()
     this.recognition.continuous = options.continuous ?? false
     this.recognition.interimResults = true
     this.recognition.maxAlternatives = 1

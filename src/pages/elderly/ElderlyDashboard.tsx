@@ -1,25 +1,29 @@
 // ============================================================
 // Elderly Dashboard — Main home screen
 // Simple, warm, friendly — understandable in 2-3 seconds
+// Multilingual i18n & Voice support
 // ============================================================
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import {
-  Brain, Pill, Droplets, Mic2, Sun, Moon, Sunset,
+  Brain, Mic2, Sun, Moon, Sunset,
   ChevronRight, Star, Clock
 } from 'lucide-react'
 import { getGreeting, formatDate } from '@/lib/utils'
 import { DEMO_REMINDERS, DEMO_ELDERLY_PROFILE } from '@/data/demoData'
 import type { Reminder } from '@/types/reminder.types'
 import { speak, isSpeechSupported } from '@/services/voice/VoiceService'
+import { useTranslation } from 'react-i18next'
 
 export function ElderlyDashboard() {
   const { currentUser } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
   const greeting = getGreeting()
   const today = formatDate(new Date())
   const profile = DEMO_ELDERLY_PROFILE
@@ -39,17 +43,6 @@ export function ElderlyDashboard() {
 
   const handleStartGame = () => navigate('/elderly/games/memoryMatch')
 
-  const reminderIcon = (type: string) => {
-    switch (type) {
-      case 'medicine': return '💊'
-      case 'hydration': return '💧'
-      case 'activity': return '🧠'
-      case 'meal': return '🍽️'
-      case 'appointment': return '📅'
-      default: return '⏰'
-    }
-  }
-
   return (
     <div className="px-4 py-5 max-w-lg mx-auto space-y-5 animate-fade-in blob-bg min-h-full">
 
@@ -57,41 +50,47 @@ export function ElderlyDashboard() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <GreetingIcon className="w-6 h-6 text-accent" />
-            <p className="text-muted-foreground font-medium">{today}</p>
+            <GreetingIcon className="w-6 h-6 text-amber-500" />
+            <p className="text-slate-500 font-medium">{today}</p>
           </div>
-          <h1 className="text-3xl font-bold text-foreground leading-tight">
+          <h1 className="text-3xl font-bold text-slate-800 leading-tight">
             {greeting},<br />
-            <span className="text-primary">{profile.greetingName || currentUser?.displayName?.split(' ')[0]}!</span>
+            <span className="text-teal-600">{profile.greetingName || currentUser?.displayName?.split(' ')[0]}!</span>
             {' '}👋
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">How are you feeling today?</p>
+          <p className="text-slate-600 mt-2 text-lg">
+            {t('dashboard.howFeeling', { defaultValue: 'How are you feeling today?' })}
+          </p>
         </div>
         {/* Avatar */}
-        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0">
+        <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center shrink-0">
           <span className="text-3xl">👴</span>
         </div>
       </div>
 
       {/* ── Today's Brain Activity ───────────────────── */}
-      <Card variant="primary" padding="lg" className="border-l-4 border-l-primary">
+      <Card variant="primary" padding="lg" className="border-l-4 border-l-teal-600">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center">
             <Brain className="w-7 h-7 text-white" />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Today's Brain Activity</p>
-            <h2 className="text-2xl font-bold text-foreground">Memory Challenge</h2>
+            <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+              {t('dashboard.todayBrainActivity', { defaultValue: "Today's Brain Activity" })}
+            </p>
+            <h2 className="text-2xl font-bold text-slate-800">
+              {t('dashboard.memoryChallenge', { defaultValue: 'Memory Challenge' })}
+            </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mb-5 text-muted-foreground">
+        <div className="flex items-center gap-4 mb-5 text-slate-600">
           <div className="flex items-center gap-1.5">
             <Clock className="w-4 h-4" />
             <span className="text-base">5 minutes</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Star className="w-4 h-4 text-accent" />
+            <Star className="w-4 h-4 text-amber-500" />
             <span className="text-base">Level 2</span>
           </div>
         </div>
@@ -103,17 +102,18 @@ export function ElderlyDashboard() {
           onClick={handleStartGame}
           icon={<Brain className="w-6 h-6" />}
           id="start-game-btn"
+          className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
         >
-          START TODAY'S GAME
+          {t('dashboard.startTodayGame', { defaultValue: "START TODAY'S GAME" })}
         </Button>
 
         {isSpeechSupported.synthesis && (
           <button
             onClick={handleVoiceGreeting}
-            className="w-full mt-3 flex items-center justify-center gap-2 text-primary font-medium text-base py-2 hover:bg-primary/5 rounded-xl transition-colors"
+            className="w-full mt-3 flex items-center justify-center gap-2 text-teal-700 font-medium text-base py-2 hover:bg-teal-50 rounded-xl transition-colors"
           >
             <Mic2 className="w-5 h-5" />
-            Hear Instructions
+            {t('dashboard.hearInstructions', { defaultValue: 'Hear Instructions' })}
           </button>
         )}
       </Card>
@@ -121,12 +121,14 @@ export function ElderlyDashboard() {
       {/* ── Quick Reminders Row ──────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold text-foreground">Today's Reminders</h2>
+          <h2 className="text-xl font-semibold text-slate-800">
+            {t('reminders.title', { defaultValue: "Today's Reminders" })}
+          </h2>
           <button
             onClick={() => navigate('/elderly/reminders')}
-            className="text-primary text-sm font-medium flex items-center gap-1 hover:underline"
+            className="text-teal-600 text-sm font-medium flex items-center gap-1 hover:underline"
           >
-            See all <ChevronRight className="w-4 h-4" />
+            {t('dashboard.seeAll', { defaultValue: 'See all' })} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -135,7 +137,7 @@ export function ElderlyDashboard() {
             <ReminderCard key={reminder.reminderId} reminder={reminder} />
           ))}
 
-          {/* Talk to Cogniva — spans full if odd */}
+          {/* Talk to Cogniva — spans full width */}
           <div
             className="col-span-2"
             onClick={() => navigate('/elderly/voice')}
@@ -143,17 +145,21 @@ export function ElderlyDashboard() {
             <Card
               clickable
               padding="md"
-              className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20"
+              className="bg-gradient-to-r from-teal-50 to-emerald-50 border-teal-200"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <Mic2 className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+                  <Mic2 className="w-6 h-6 text-teal-700" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-foreground text-lg">Talk to Cogniva</p>
-                  <p className="text-muted-foreground text-sm">"How can I help you today?"</p>
+                  <p className="font-semibold text-slate-800 text-lg">
+                    {t('voice.title', { defaultValue: 'Talk to Cogniva' })}
+                  </p>
+                  <p className="text-slate-500 text-sm">
+                    "{t('voice.prompt', { defaultValue: 'How can I help you today?' })}"
+                  </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
             </Card>
           </div>
@@ -163,27 +169,37 @@ export function ElderlyDashboard() {
       {/* ── My Progress ─────────────────────────────── */}
       <Card padding="md">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold text-foreground">My Progress</h2>
-          <span className="badge-success text-sm">This Week</span>
+          <h2 className="text-xl font-semibold text-slate-800">
+            {t('dashboard.myProgress', { defaultValue: 'My Progress' })}
+          </h2>
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-semibold text-xs rounded-full">
+            {t('dashboard.thisWeek', { defaultValue: 'This Week' })}
+          </span>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex-1 text-center">
-            <div className="text-3xl font-bold text-primary">7</div>
-            <div className="text-sm text-muted-foreground">Sessions</div>
+            <div className="text-3xl font-bold text-teal-600">7</div>
+            <div className="text-sm text-slate-500">
+              {t('dashboard.sessions', { defaultValue: 'Sessions' })}
+            </div>
           </div>
-          <div className="w-px h-10 bg-border" />
+          <div className="w-px h-10 bg-slate-200" />
           <div className="flex-1 text-center">
-            <div className="text-3xl font-bold text-secondary">88%</div>
-            <div className="text-sm text-muted-foreground">Accuracy</div>
+            <div className="text-3xl font-bold text-emerald-600">88%</div>
+            <div className="text-sm text-slate-500">
+              {t('dashboard.accuracy', { defaultValue: 'Accuracy' })}
+            </div>
           </div>
-          <div className="w-px h-10 bg-border" />
+          <div className="w-px h-10 bg-slate-200" />
           <div className="flex-1 text-center">
-            <div className="text-3xl font-bold text-accent">↗</div>
-            <div className="text-sm text-muted-foreground">Improving</div>
+            <div className="text-3xl font-bold text-amber-500">↗</div>
+            <div className="text-sm text-slate-500">
+              {t('dashboard.improving', { defaultValue: 'Improving' })}
+            </div>
           </div>
         </div>
-        <p className="mt-3 text-sm text-secondary font-medium bg-secondary/10 rounded-xl p-2 text-center">
-          🌟 Great job! Your memory is getting stronger every day!
+        <p className="mt-3 text-sm text-teal-800 font-medium bg-teal-50 rounded-xl p-2 text-center">
+          🌟 {t('dashboard.encouragement', { defaultValue: 'Great job! Your memory is getting stronger every day!' })}
         </p>
       </Card>
 
@@ -206,16 +222,18 @@ function ReminderCard({ reminder }: { reminder: Reminder }) {
     <Card
       clickable
       padding="sm"
-      className={isDue ? 'border-accent/40 bg-accent/5' : ''}
+      className={isDue ? 'border-amber-300 bg-amber-50' : ''}
       onClick={() => navigate('/elderly/reminders')}
     >
       <div className="text-3xl mb-2">{reminder.icon}</div>
-      <p className="font-semibold text-foreground text-base leading-tight">{reminder.title}</p>
-      <p className="text-muted-foreground text-sm mt-1">
+      <p className="font-semibold text-slate-800 text-base leading-tight">{reminder.title}</p>
+      <p className="text-slate-500 text-sm mt-1">
         {reminder.time.padStart(5, '0')} {parseInt(reminder.time) < 12 ? 'AM' : 'PM'}
       </p>
       {isDue && (
-        <span className="badge-warning text-xs mt-1 block">Due now</span>
+        <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-semibold mt-1 inline-block">
+          Due now
+        </span>
       )}
     </Card>
   )

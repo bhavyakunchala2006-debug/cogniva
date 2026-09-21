@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for authentication and role validation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && (request.auth.token.role == role || resource.data.role == role);
+    }
+
+    // User profile documents
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // Reminders and medication schedule
+    match /reminders/{reminderId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // Cognitive game activity sessions
+    match /game_sessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+    }
+
+    // Caregiver monitoring & Health Worker clinical reports
+    match /reports/{reportId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('caregiver') || hasRole('healthworker');
+    }
+
+    // Default catch-all rule: Require authentication for any other collection
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
